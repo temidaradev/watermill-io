@@ -208,6 +208,12 @@ func (s *Subscriber) read(reader *bufio.Reader) chan []byte {
 			} else {
 				chunk, err = reader.ReadSlice(s.config.MessageDelimiter)
 				bytesRead = len(chunk)
+				// copy the data for a race condition
+				if err == nil && bytesRead > 0 {
+					chunkCopy := make([]byte, bytesRead)
+					copy(chunkCopy, chunk)
+					chunk = chunkCopy
+				}
 			}
 
 			if err != nil && errors.Cause(err) != io.EOF {
